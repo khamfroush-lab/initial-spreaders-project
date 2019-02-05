@@ -1,0 +1,697 @@
+--- failuremodel_mod2.m	2019-01-22 22:23:36.969064661 -0500
++++ failuremodel_new.m	2019-01-28 15:50:32.336818778 -0500
+@@ -1,32 +1,45 @@
+-% close all;
+-% clear all;
+-function failuremodel_mod2(n1, n2,topology,inter)
+-
+-
+-% n1=500;  %number of nodes in network X
+-% n2=500;  %number of nodes in network Y
+-p1=(4/(n1-1)); %the probability of having a link between nodes of network X
+-p2=(4/(n2-1)); %the probability of having a link between nodes of network Y
+-p12=0.05; %prob. of having a link from node X to node Y
+-p21=0.05; %prob. of having a link from node Y to node X
+-
+-% variables for Barabasi Arbert Model/Scale Free Network
+-m10 = 3; %m10: number of initially placed nodes of network X
+-m1  = 2; %m11: number of nodes a new added node is connected to, 1 <= m1 < m10
+-m20 = 3; %m20: number of initially placed nodes of network Y
+-m2  = 2; %m21: number of nodes a new added node is connected to, 1 <= m2 < m20
+-
+-% variables for Watts Strogatz Model/Small Workd Network
+-deg1 = 4; %d1: mean degree of network X, deg%2=0 && 0<deg<n-1
+-rp1 = 0.5; %r1: rewiring probability of network X, 0<=rp<=1
+-deg2 = 4; %d2: mean degree of network Y, deg%2=0 && 0<deg<n-1 
+-rp2 = 0.5; %r2: rewiring probability of network Y, 0<=rp<=1
+-
+-
+-%variables for Forest Fire model
+-pFF=0.1; %forward burning probability p in [0,1], 
+-rFF=1;   %r is the ratio between outlinks and inlinks selected at every "back burn" step
++%  close all;
++%  clear all;
+ 
++ function failuremodel_new(topology,k_per)
++ 
++% % n1=500;  %number of nodes in network X
++% % n2=500;  %number of nodes in network Y
++% p1=(4/(n1-1)); %the probability of having a link between nodes of network X
++% p2=(4/(n2-1)); %the probability of having a link between nodes of network Y
++% p12=0.05; %prob. of having a link from node X to node Y
++% p21=0.05; %prob. of having a link from node Y to node X
++
++% % variables for Barabasi Arbert Model/Scale Free Network
++% m10 = 3; %m10: number of initially placed nodes of network X
++% m1  = 2; %m11: number of nodes a new added node is connected to, 1 <= m1 < m10
++% m20 = 3; %m20: number of initially placed nodes of network Y
++% m2  = 2; %m21: number of nodes a new added node is connected to, 1 <= m2 < m20
++
++% % variables for Watts Strogatz Model/Small Workd Network
++% deg1 = 4; %d1: mean degree of network X, deg%2=0 && 0<deg<n-1
++% rp1 = 0.5; %r1: rewiring probability of network X, 0<=rp<=1
++% deg2 = 4; %d2: mean degree of network Y, deg%2=0 && 0<deg<n-1 
++% rp2 = 0.5; %r2: rewiring probability of network Y, 0<=rp<=1
++
++
++% %variables for Forest Fire model
++% pFF=0.1; %forward burning probability p in [0,1], 
++% rFF=1;   %r is the ratio between outlinks and inlinks selected at every "back burn" step
++%k_per = k;
++
++file_name = strcat(topology,'.csv');
++adj = csvread(file_name);
++n = size(adj);
++n1 = n(1);
++n2 = n(2);
++adj_x = adj(1:n1/2, 1:n2/2);
++adj_y = adj(n1/2+1:n1 , n2/2+1:n2);
++
++adj_xy= adj(n1/2+1:n1,1:n2/2);
++adj_yx= adj(1:n1/2,n2/2+1:n2);
++n1 = n1/2;
++n2 = n2/2;
+ 
+ coord=zeros(1,2);
+ for i=1:n1
+@@ -133,8 +146,8 @@
+ vector_F7=cell(1,100);
+ vector_F9=cell(1,100);
+ 
+-vector_adjx = cell(1,100);
+-vector_adjy = cell(1,100);
++
++
+ 
+ for timer=1:100
+     
+@@ -152,51 +165,11 @@
+ %         adj_x = small_world_graph(n1, deg1, rp1);
+ %          adj_y = small_world_graph(n2, deg2, rp2);
+ 
+-if topology=="ER-ER"
+-       adj_x = random_graph(n1,p1);   
+-       adj_y = random_graph(n2,p2); 
+-elseif topology =="ER-SF"
+-    seed =[0 1 0 0 1;1 0 0 1 0;0 0 0 1 0;0 1 1 0 0;1 0 0 0 0];  
+-    adj_x = random_graph(n1,p1);   
+-    adj_y = SFNG(n2, m2, seed); 
+-elseif topology =="ER-SW"
+-    adj_x = random_graph(n1,p1);   
+-    adj_y = small_world_graph(n2, deg2, rp2);
+-
+-elseif topology =="SF-SF"
+-     seed =[0 1 0 0 1;1 0 0 1 0;0 0 0 1 0;0 1 1 0 0;1 0 0 0 0];  
+-     adj_x = SFNG(n1, m1, seed); 
+-     adj_y = SFNG(n2, m2, seed); 
+-elseif topology =="SF-ER"
+-     seed =[0 1 0 0 1;1 0 0 1 0;0 0 0 1 0;0 1 1 0 0;1 0 0 0 0];  
+-     adj_x = SFNG(n1, m1, seed);
+-     adj_y = random_graph(n2,p2); 
+-     
+-elseif topology =="SF-SW"
+-     seed =[0 1 0 0 1;1 0 0 1 0;0 0 0 1 0;0 1 1 0 0;1 0 0 0 0];  
+-     adj_x = SFNG(n1, m1, seed);
+-     adj_y = small_world_graph(n2, deg2, rp2);
+-     
+-elseif topology =="SW-SW"
+-    adj_x = small_world_graph(n1, deg1, rp1);
+-    adj_y = small_world_graph(n2, deg2, rp2);
+-elseif topology =="SW-ER"
+-    adj_x = small_world_graph(n1, deg1, rp1);
+-    adj_y = random_graph(n2,p2); 
+-    
+-elseif topology =="SW-SF"
+-     seed =[0 1 0 0 1;1 0 0 1 0;0 0 0 1 0;0 1 1 0 0;1 0 0 0 0];  
+-     adj_x = small_world_graph(n1, deg1, rp1);
+-     adj_y = SFNG(n2, m2, seed); 
+-
+-end
+ 
+ 
+ 
+ 
+ 
+-vector_adjx{timer} = adj_x;
+-vector_adjy{timer} = adj_y;
+ 
+ %Forest fire model
+ % T1=n1;
+@@ -327,245 +300,19 @@
+     node_degree_order_y=[node_degree_order_y Q];
+ end                                                                             %Samuel- X or Y ?
+  node_degree_order_y=node_degree_order_y(1,2:length(node_degree_order_y)); %the index of the nodes of network X are sorted from nodes with highest degree to lowest
+-%****************************This part is related to the forest fire model 
+-%  if mean(degree_net_x)>6.5 || mean(degree_net_x)<5.5
+-%      continue
+-%  end
+-%   if mean(degree_net_y)>6.5 || mean(degree_net_y)<5.5
+-%      continue
+-%  end
+-%************************The following lines calculate the 10% of the nodes with highest betweeness centrality metric for each network separately
+-% betw_x = node_betweenness_slow(adj_x);  %gives the betweenness of each node in network X
+-% betw_y = node_betweenness_slow(adj_y);  %gives the betweenness of each node in network Y
+-% bw1=10000.*betw_x;
+-% bw2=10000.*betw_y;
+-% moratab1=sort(bw1);  %this shows the betweenness of the nodes in X sorted
+-% moratab2=sort(bw2);  %this shows the betweenness of the nodes in Y sorted
+-% perc_high_x=moratab1(1,91:100);
+-% perc_high_y=moratab2(1,91:100);
+-% netx_high_bet=zeros(1,1);
+-% nety_high_bet=zeros(1,1);
+-% for i=1:length(perc_high_x)
+-% bwm1=find(bw1==abs(perc_high_x(i)));
+-% netx_high_bet=[netx_high_bet bwm1];
+-% end
+-% for j=1:length(perc_high_y)
+-%     bwm2=find(bw2==abs(perc_high_y(j)));
+-% nety_high_bet=[nety_high_bet bwm2];
+-% end
+-% netx_high_bet=netx_high_bet(1,2:length(netx_high_bet)); %the index of the 10% of nodes with max betweenness in net X
+-% nety_high_bet=nety_high_bet(1,2:length(nety_high_bet)); %the index of the 10% of nodes with max betweenness in net Y
+-%*******************************10% of nodes with lowest betweenness centrality
+-% betw_x = node_betweenness_slow(adj_x);  %gives the betweenness of each node in network X
+-% betw_y = node_betweenness_slow(adj_y);  %gives the betweenness of each node in network Y
+-% bw1=1000000.*betw_x;
+-% bw2=1000000.*betw_y;
+-% moratab1=sort(bw1);  %this shows the betweenness of the nodes in X sorted
+-% moratab2=sort(bw2);  %this shows the betweenness of the nodes in Y sorted
+-% perc_high_x=moratab1(1,1:10);
+-% perc_high_y=moratab2(1,1:10);
+-% netx_low_bet=zeros(1,1);
+-% nety_low_bet=zeros(1,1);
+-% for i=1:length(perc_high_x)
+-% bwm1=find(bw1==abs(perc_high_x(i)));
+-% netx_low_bet=[netx_low_bet bwm1];
+-% end
+-% for j=1:length(perc_high_y)
+-%     bwm2=find(bw2==abs(perc_high_y(i)));
+-% nety_low_bet=[nety_low_bet bwm2];
+-% end
+-% netx_low_bet=netx_low_bet(1,2:length(netx_low_bet)); %the index of the 10% of nodes with max betweenness in net X
+-% nety_low_bet=nety_low_bet(1,2:length(nety_low_bet)); %the index of the 10% of nodes with max betweenness in net Y
+-% netx_low_bet=unique(netx_low_bet);
+-% nety_low_bet=unique(nety_low_bet);
+-%******The following lines are defining the interconnectivity between two
+-%******networks (different models are considered, e.g., sparse,intermediate sparse,....)
+-
+-if inter=="sparse&random"
+-    % %******sparse inter-dependency
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    
+-    a = 1;
+-    b = n1;
+-    r = (b-a).*rand(1,50) + a;
+-    r2=ceil(r);
+-    r=unique(r2);
+- %   r = randperm(n1);
+-    
+-    r_X=r(1,1:0.04*n1);
+-    for e=1:length(r_X)
+-        e1=r_X(e);
+-        y = randi([1 n2],1,1);
+-        adj_xy(e1,y)=1;  %creating the adj matrix for interdependency between Y and X(X is parent of Y)
+-        
+-    end
+-    
+-    a = n1;
+-    b = n1+n2;
+-    r = (b-a).*rand(1,50) + a;
+-    r3=ceil(r);
+-    r=unique(r3);
+- %   r = randperm(n2);
+-    
+-    r_Y=r(1,1:0.04*n2);
+-    for e=1:length(r_Y)
+-        e1=r_Y(e)-n1;
+-        x = randi([1 n1],1,1);
+-        adj_yx(e1,x)=1;  %creating the adj matrix for interdependency between Y and X(Y is parent of X)
+-        
+-    end
+-
+-elseif inter =="dense&random"
+-     %*************high density interdependency
+-    
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    
+-    a = 1;
+-    b = n1;
+-    r = (b-a).*rand(1,90) + a;
+-    r2=ceil(r);
+-    r=unique(r2);
+-  %  r = randperm(n1);
+-    
+-    r_X=r(1,1:0.1*n1);
+-    for e=1:length(r_X)
+-        e1=r_X(e);
+-        y = randi([1 n2],1,1);
+-        adj_xy(e1,y)=1;            %creating the adj matrix for interdependency between Y and X(X is parent of Y)
+-    end
+-    
+-    a = n1;
+-    b = n1+n2;
+-    r = (b-a).*rand(1,90) + a;
+-    r3=ceil(r);
+-    r=unique(r3);
+-  %  r = randperm(n2);
+-    
+-    r_Y=r(1,1:0.1*n2);
+-    for e=1:length(r_Y)
+-        e1=r_Y(e)-n1;
+-        x = randi([1 n1],1,1);
+-        adj_yx(e1,x)=1;            %creating the adj matrix for interdependency between Y and X(Y is parent of X)
+-        
+-    end
+-    
+-elseif inter== "sparse&designed-max_max"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,1:(0.04*n1));
+-    max_degree_y=node_degree_order_y(1,1:(0.04*n2));
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end
+-    
+-    
+-elseif inter== "sparse&designed-max_min"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,1:(0.04*n1));
+-    max_degree_y=node_degree_order_y(1,(n2-0.04*n2+1):n2);
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end    
+-    
+-elseif inter== "sparse&designed-min_min"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,(n1-0.04*n1+1):n1);
+-    max_degree_y=node_degree_order_y(1,(n2-0.04*n2+1):n2);
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end    
+-
+-elseif inter== "dense&designed-max_max"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,1:(0.1*n1));
+-    max_degree_y=node_degree_order_y(1,1:(0.1*n2));
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end    
+-
+-elseif inter== "dense&designed-max_min"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,1:(0.1*n1));
+-    max_degree_y=node_degree_order_y(1,(n2-0.1*n2+1):n2);
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end    
+-
+-elseif inter== "dense&designed-min_min"
+-    %*****************************
+-    %node with max degree of network X is connected to node with max degree of
+-    %Y (dense model with 10 connection) one-by-one fashion
+-    adj_xy=zeros(n1,n2);
+-    adj_yx=zeros(n2,n1);
+-    max_degree_x=node_degree_order_x(1,(n2-0.1*n2+1):n2);
+-    max_degree_y=node_degree_order_y(1,(n2-0.1*n2+1):n2);
+-    for i=1:length(max_degree_x)
+-        q1=max_degree_x(1,i);
+-        q2=max_degree_y(1,i);
+-        adj_xy(q1,q2)=1;
+-        adj_yx(q2,q1)=1;
+-    end    
+-    
+-end
++ 
++ 
+ 
+ %******************************
+ initial_GC_X=length(largestcomponent(adj_x));   %Giant component of the graphX
+ initial_GC_Y=length(largestcomponent(adj_y));   %Giant component of the graphY
+-%**********Set the initail failure(it could be only set for one network or both networks)
+-%**********We use different methods for setting the inital failure
+-%F0=[node_degree_order_x(1,1:2) n1+node_degree_order_y(1,1:2)];  %the firt three nodes of each network with max degree are failed initially
+-%F0=[2 5 10 120 180];
+-%F0=[index_max_degree_x(1) index_max_degree_y(1)];
+-%F0=[104 115 120 150 185];
+-%  uu=adj_x(5,:);
+-%  uu1=find(uu==1);
+-%  uu2=adj_x(uu1(1),:);
+-%  uu3=find(uu2==1); 
+-%  F=[uu1 uu3];
+-%  F0=unique(F);
+ 
+ 
+ 
+ 
+ 
+ %***creating random initial failure
+-k=0.05*n1;
++k=floor(k_per/100 * n1)
+ % F=ceil(n1*rand(1,90)); 
+ % F=unique(F);
+ F = randperm(n1);
+@@ -587,7 +334,7 @@
+ 
+ % F=ceil(n1*rand(1,90));
+ % F=unique(F);
+-F = randperm(n1);
++F0F = randperm(n1);
+ F_a=F(1,1:k);
+ F2= [ F_a F_b ];   % random initial failures in network A and B
+ 
+@@ -609,26 +356,8 @@
+ 
+ vector_F7{timer}=F7;
+ vector_F9{timer}=F9;
+-%*****This part is generating some GML files for visualizing the failure propgation
+-%*****We use these GML files later on in Python to generate colored graphs
+-%gml file generation
+-% indx=0;
+-% adjacencyx=adj_x;                               %Samuel- yx or yy ?
+-% adjacencyy=adj_y;
+-% adjacencyxy=adj_xy;
+-% adjacencyyx=adj_yx;
+-% failed=F0;
+-% graphtogml(indx, adjacencyx, adjacencyy, adjacencyyx, adjacencyxy, failed)
+-%********
+-% F=ceil((n1+n2)*rand(1,30)); %set of initial failures 
+-% F=unique(F);
+-% F=F(1,1:3);
+-% F0=F;
+-%F0=[10 30 90];
+-%********
+-%F0=[index_max_degree_x index_max_degree_y];
+-%T=period(1,time);   %number of time slots that we are evaluating 
+-%*****here we set the propagation model characterisitics,e.g.Threshold,pmax
++
++
+ 
+ pmax=0.8;  %the prob that a node fails if all parents are failed
+ kx=0.3;    %Threshold for nodes inside network X(minimum fraction of neighbors that should be failed before a node can fail)
+@@ -693,25 +422,7 @@
+      n_fail_time=[n_fail_time g];
+  end
+     n_fail_time=n_fail_time(1,2:length(n_fail_time));
+-%     failed_low_betx=zeros(1,period(1));
+-%     failed_low_bety=zeros(1,period(1));
+-%     for i=1:period(1)
+-%         a=list_failed{i};
+-%         sum_betx=0;
+-%         sum_bety=0;
+-%         for j=1:length(netx_low_bet)
+-%             c1=length(find(a==netx_low_bet(j)));
+-%             sum_betx=sum_betx+c1;
+-%         end
+-%         for k=1:length(nety_low_bet)
+-%             c2=length(find(a==100+nety_low_bet(k)));
+-%             sum_bety=sum_bety+c2;
+-%         end
+-%         failed_low_betx(i)=sum_betx;
+-%         failed_low_bety(i)=sum_bety;
+-%     end
+-%     failed_low_betx=(100/length(netx_low_bet)).*failed_low_betx; %shows the percentage of nodes of Network X with low betweeness that are failed over time
+-%     failed_low_bety=(100/length(nety_low_bet)).*failed_low_bety; %shows the percentage of nodes of Network Y with low betweeness that are failed over time
++    
+     
+     failed_low_degx=zeros(1,period(1));
+     failed_low_degy=zeros(1,period(1));
+@@ -733,28 +444,7 @@
+     end
+        failed_low_degx=(100/length(node_index_low_10_degree)).*failed_low_degx; %shows the percentage of nodes of network X with low degree that are failed over time
+        failed_low_degy=(100/length(node_indey_low_10_degree)).*failed_low_degy; %shows the percentage of nodes of network Y with low degree that are failed over time
+-     
+-
+-%     failed_high_betx=zeros(1,period(1));
+-%     failed_high_bety=zeros(1,period(1));
+-%     for i=1:period(1)
+-%         a=list_failed{i};
+-%         sum_betx=0;
+-%         sum_bety=0;
+-%         for j=1:length(netx_high_bet)
+-%             c1=length(find(a==netx_high_bet(j)));
+-%             sum_betx=sum_betx+c1;
+-%         end
+-%         for k=1:length(nety_high_bet)
+-%             c2=length(find(a==100+nety_high_bet(k)));
+-%             sum_bety=sum_bety+c2;
+-%         end
+-%         failed_high_betx(i)=sum_betx;
+-%         failed_high_bety(i)=sum_bety;
+-%     end
+-%     failed_high_betx=(100/length(netx_high_bet)).*failed_high_betx; %shows the percentage of nodes of network X with high betweeness that are failed over time
+-%     failed_high_bety=(100/length(nety_high_bet)).*failed_high_bety; %shows the percentage of nodes of network Y with high betweeness that are failed over time
+-
++       
+     
+     failed_high_degx=zeros(1,period(1));
+     failed_high_degy=zeros(1,period(1));
+@@ -763,7 +453,7 @@
+         sum_degx=0;
+         sum_degy=0;
+         for j=1:length(node_index_high_10_degree)
+-            c1=length(find(a==node_index_high_10_degree(j)));
++            c1=length(find(a==node_indexvector_n_fail_time_high_10_degree(j)));
+             sum_degx=sum_degx+c1;
+         end
+         for z=1:length(node_indey_high_10_degree)
+@@ -844,69 +534,7 @@
+     vector_failed_high_degy9{timer}=failed_high_degy;
+     
+ end
+-%     t=1:period(1);
+-%     figure
+-%    subplot(2,2,1)
+-%     plot(t,n_fail_time,'-O')
+-%     grid on
+-%     xlabel('time')
+-%     ylabel('No. of failed nodes')
+-%     legend('SF')
+-%     figure
+-%     subplot(2,2,1)
+-%     plot(t,failed_low_betx,'-s')
+-%     grid on
+-%     xlabel('time')
+-%     ylabel('failed low betweeness X (10%)')
+-%     legend('SF')
+-%     subplot(2,2,2)
+-%     plot(t,failed_low_bety,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed low betweeness Y (10%)')
+-%     legend('SF')
+-%     subplot(2,2,3)
+-%     plot(t,failed_low_degx,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed low degree X (10%)')
+-%     legend('SF')
+-%     subplot(2,2,4)
+-%     plot(t,failed_low_degy,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed low degree Y (10%)')
+-%     legend('SF')
+-%     
+-%     figure
+-%     subplot(2,2,1)
+-%     plot(t,failed_high_betx,'-s')
+-%     grid on
+-%     xlabel('time')
+-%     ylabel('failed high betweeness X (10%)')
+-%     legend('SF')
+-%     subplot(2,2,2)
+-%     plot(t,failed_high_bety,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed high betweeness Y (10%)')
+-%     legend('SF')
+-%     subplot(2,2,3)
+-%     plot(t,failed_high_degx,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed high degree X (10%)')
+-%     legend('SF')
+-%     subplot(2,2,4)
+-%     plot(t,failed_high_degy,'-*')
+-%      grid on
+-%     xlabel('time ')
+-%     ylabel('failed high degree Y (10%)')
+-%     legend('SF')
+ 
+-    
+-    
+-    
+ failed=find(V_state==1);
+ failed_id{time}=failed;
+ loct=zeros(1,1);
+@@ -934,6 +562,23 @@
+   Dgr1=Dgr1(2:length(Dgr1)); %degree of failed nodes in network X
+   Dgr2=Dgr2(2:length(Dgr2)); %degree of failed nodes in network Y
+   failed_x_period{time}=Dgr1;  %degree of the failed nodes in X for period of time
++%%%%%%%%%%%%%%%%%%%%%%%%%%WE are saving the results
++% save initial_fail_set_ER1 initial_fail_set 
++% save avr_ER1 avr
++% save degree_dis_X_ER1 degree_dis_X
++% save degree_dis_Y_ER1 degree_dis_Y
++% 
++% save failed_x_period_counter_ER1 failed_x_period_counter
++% save failed_y_period_counter_ER1 failed_y_period_counter
++% save fxdegree_in_5_step_ER1 fxdegree_in_5_step
++% save fxdegree_in_10_step_ER1 fxdegree_in_10_step
++% save fxdegree_in_20_step_ER1 fxdegree_in_20_step
++% save fxdegree_in_50_step_ER1 fxdegree_in_50_step
++% 
++% save fydegree_in_5_step_ER1 fydegree_in_5_step
++% save fydegree_in_10_step_ER1 fydegree_in_10_step
++% save fydegree_in_20_step_ER1 fydegree_in_20_step
++% save fydegree_in_50_step_ER1 fydegree_in_50_step
+   failed_y_period{time}=Dgr2;
+   GcompX=largestcomponent(adj_x);
+   GcompY=largestcomponent(adj_y);
+@@ -990,100 +635,13 @@
+ 
+ %save scenari1 failed_x_period_counter failed_y_period_counter degree_dis_X degree_dis_Y initial_fail_set
+ 
+-%This part is related to the giant component of the graph(we don't need it for now)
+-% GCX_ave_1=zeros(1,1);
+-% GCY_ave_1=zeros(1,1);
+-% for h=1:length(period)
+-%     sum1=0;
+-%     sum2=0;
+-%     for t=1:length(timer)
+-%     gx=GC_X{t};
+-%     gy=GC_Y{t};
+-%     sum1=sum1+gx(h);
+-%     sum2=sum2+gy(h);
+-%     end
+-%     GCX_ave=sum1/length(timer);
+-%     GCY_ave=sum2/length(timer);
+-%     GCX_ave_1=[GCX_ave_1 GCX_ave];
+-%     GCY_ave_1=[GCY_ave_1 GCY_ave];
+-% end
+-% GCX_ave_1=GCX_ave_1(1,2:length(GCX_ave_1)); %average of the giant component size of net X for different number of runs
+-% GCY_ave_1=GCY_ave_1(1,2:length(GCY_ave_1));
+-% %degree of failed nodes for diff periods of time
+-% Gx=find(~cellfun(@isempty,failed_x_period_counter));
+-% Gy=find(~cellfun(@isempty,failed_y_period_counter));
+-% fxdegree_in_5_step=zeros(1,1);
+-% fxdegree_in_10_step=zeros(1,1);
+-% fxdegree_in_20_step=zeros(1,1);
+-% fxdegree_in_50_step=zeros(1,1);
+-% 
+-% 
+-% fydegree_in_5_step=zeros(1,1);
+-% fydegree_in_10_step=zeros(1,1);
+-% fydegree_in_20_step=zeros(1,1);
+-% fydegree_in_50_step=zeros(1,1);
+-% 
+-% for i=1:length(Gx)
+-%     d=Gx(i);
+-%     A=failed_x_period_counter{d};
+-%     fxdegree_in_5_step=[fxdegree_in_5_step A{2}];
+-%     fxdegree_in_10_step=[fxdegree_in_10_step A{3}];
+-%     fxdegree_in_20_step=[fxdegree_in_20_step A{5}];
+-%     fxdegree_in_50_step=[fxdegree_in_50_step A{8}];
+-%     
+-%     
+-%     
+-%     B=failed_y_period_counter{d};
+-%     fydegree_in_5_step=[fydegree_in_5_step B{2}];
+-%     fydegree_in_10_step=[fydegree_in_10_step B{3}];
+-%     fydegree_in_20_step=[fydegree_in_20_step B{5}];
+-%     fydegree_in_50_step=[fydegree_in_50_step B{8}];
+-% end
+-% 
+-% fxdegree_in_5_step=fxdegree_in_5_step(1,2:length(fxdegree_in_5_step)); 
+-% fxdegree_in_10_step=fxdegree_in_10_step(1,2:length(fxdegree_in_10_step)); 
+-% fxdegree_in_20_step=fxdegree_in_20_step(1,2:length(fxdegree_in_20_step)); 
+-% fxdegree_in_50_step=fxdegree_in_50_step(1,2:length(fxdegree_in_50_step)); 
+-% 
+-% fydegree_in_5_step=fydegree_in_5_step(1,2:length(fydegree_in_5_step)); 
+-% fydegree_in_10_step=fydegree_in_10_step(1,2:length(fydegree_in_10_step)); 
+-% fydegree_in_20_step=fydegree_in_20_step(1,2:length(fydegree_in_20_step)); 
+-% fydegree_in_50_step=fydegree_in_50_step(1,2:length(fydegree_in_50_step)); 
+-% 
+-% 
+-% 
+-% 
+-% 
+-% 
+-% 
+-% NF(1,:)=[];
+-% %NF=NF(2:length(NF),:);
+-% for i=1:length(period)
+-%     NF1=NF(:,i);
+-%     NF2=mean(NF1);
+-%     avr(i)=NF2;
+-% end
+ 
+-temp = strcat("scenari-11&12n=100",inter,"-",topology,"k=5%",".mat") ;
+-save(temp, "vector_n_fail_time" ,"vector_failed_low_degx", "vector_failed_low_degy" , "vector_failed_high_degx" ,"vector_failed_high_degy" , "vector_Dgr1_11", "vector_Dgr1_12" ,"vector_F1", "vector_F2", "vector_n_fail_time2" , "vector_failed_low_degx2", "vector_failed_low_degy2", "vector_failed_high_degx2", "vector_failed_high_degy2", "vector_Dgr1_21", "vector_Dgr1_22", "vector_S_time1", "vector_S_time2", "vector_n_fail_time7", "vector_failed_low_degy7", "vector_failed_high_degx7", "vector_failed_high_degy7", "vector_Dgr1_112", "vector_Dgr1_122", "vector_F7", "vector_S_time7", "vector_adjx", "vector_adjy")
+-temp = strcat("scenari-21&22n=100",inter,"-",topology,"k=5%",".mat") ;
+-save( temp ,"vector_n_fail_time3" , "vector_failed_low_degx3" ,"vector_failed_low_degy3", "vector_failed_high_degx3", "vector_failed_high_degy3", "vector_Dgr2_11", "vector_Dgr2_12", "vector_F3", "vector_F4", "vector_n_fail_time4", "vector_failed_low_degx4", "vector_failed_low_degy4", "vector_failed_high_degx4", "vector_failed_high_degy4", "vector_Dgr2_21", "vector_Dgr2_22", "vector_S_time3" ,"vector_S_time4",  "vector_n_fail_time9" ,  "vector_failed_low_degx9", "vector_failed_low_degy9", "vector_failed_high_degx9", "vector_failed_high_degy9", "vector_Dgr2_112", "vector_Dgr2_122", "vector_F9", "vector_S_time9", "vector_adjx", "vector_adjy")          
++disp(k*100/n1);
++k_per = num2str(k_per);
+ 
+-end
+-%%%%%%%%%%%%%%%%%%%%%%%%%%WE are saving the results
+-% save initial_fail_set_ER1 initial_fail_set 
+-% save avr_ER1 avr
+-% save degree_dis_X_ER1 degree_dis_X
+-% save degree_dis_Y_ER1 degree_dis_Y
+-% 
+-% save failed_x_period_counter_ER1 failed_x_period_counter
+-% save failed_y_period_counter_ER1 failed_y_period_counter
+-% save fxdegree_in_5_step_ER1 fxdegree_in_5_step
+-% save fxdegree_in_10_step_ER1 fxdegree_in_10_step
+-% save fxdegree_in_20_step_ER1 fxdegree_in_20_step
+-% save fxdegree_in_50_step_ER1 fxdegree_in_50_step
+-% 
+-% save fydegree_in_5_step_ER1 fydegree_in_5_step
+-% save fydegree_in_10_step_ER1 fydegree_in_10_step
+-% save fydegree_in_20_step_ER1 fydegree_in_20_step
+-% save fydegree_in_50_step_ER1 fydegree_in_50_step
+\ No newline at end of file
++temp = strcat("scenari-11&12","-",topology,"k=",k_per,"%.mat") ;
++save(temp, "vector_n_fail_time" ,"vector_failed_low_degx", "vector_failed_low_degy" , "vector_failed_high_degx" ,"vector_failed_high_degy" , "vector_Dgr1_11", "vector_Dgr1_12" ,"vector_F1", "vector_F2", "vector_n_fail_time2" , "vector_failed_low_degx2", "vector_failed_low_degy2", "vector_failed_high_degx2", "vector_failed_high_degy2", "vector_Dgr1_21", "vector_Dgr1_22", "vector_S_time1", "vector_S_time2", "vector_n_fail_time7", "vector_failed_low_degy7", "vector_failed_high_degx7", "vector_failed_high_degy7", "vector_Dgr1_112", "vector_Dgr1_122", "vector_F7", "vector_S_time7")
++temp = strcat("scenari-21&22","-",topology,"k=",k_per,"%.mat") ;
++save( temp ,"vector_n_fail_time3" , "vector_failed_low_degx3" ,"vector_failed_low_degy3", "vector_failed_high_degx3", "vector_failed_high_degy3", "vector_Dgr2_11", "vector_Dgr2_12", "vector_F3", "vector_F4", "vector_n_fail_time4", "vector_failed_low_degx4", "vector_failed_low_degy4", "vector_failed_high_degx4", "vector_failed_high_degy4", "vector_Dgr2_21", "vector_Dgr2_22", "vector_S_time3" ,"vector_S_time4",  "vector_n_fail_time9" ,  "vector_failed_low_degx9", "vector_failed_low_degy9", "vector_failed_high_degx9", "vector_failed_high_degy9", "vector_Dgr2_112", "vector_Dgr2_122", "vector_F9", "vector_S_time9")          
++
++ end
+\ No newline at end of file

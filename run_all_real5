@@ -1,0 +1,2 @@
+failuremodel_new('HIV-Human-Genetic',20)
+failuremodel_new('FAO-Multiplex-Trade',20);
