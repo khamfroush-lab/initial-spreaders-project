@@ -1,6 +1,0 @@
-topology='/u/spa-d2/ugrad/sil222/Documents/MATLAB/matlabcode/HIV-Human-Genetic';
-file_name = strcat(topology,'.csv');
-adj = csvread(file_name);
-n = size(adj);
-n1 = n(1);
-n2 = n(2);

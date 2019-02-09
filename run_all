@@ -1,5 +1,0 @@
- 
-top = [ "ER-ER" "ER-SF" "ER-SW" "SF-SF" "SF-SW" "SF-ER" "SW-SW" "SW-ER" "SW-SF" ]
-inter = [ " sparse&random" "dense&random" "  ]
-failuremodel_mod(100,100,"ER-ER","sparse&random")
- 
